@@ -50,7 +50,7 @@ public:
 		const FloatType* feature,
 		std::vector<size_t> candidates,
 		std::function<FloatType (const FloatType*,const FloatType*,size_t,const std::vector<bool>&)> metric,
-		const std::vector<bool>& mask=std::vector<bool>())
+		const std::vector<bool>& mask=std::vector<bool>()) const
 	{
 		std::vector<FloatType> distances(candidates.size());
 		for(size_t i=0;i<candidates.size();i++)
@@ -65,6 +65,44 @@ public:
 			candidates.resize(k);
 		}
 		return candidates;
+	}
+	
+	std::vector<std::size_t> knearest_query(size_t k,const FloatType* feature,
+		std::function<FloatType (const FloatType*,const FloatType*,size_t,const std::vector<bool>&)> metric,
+		std::vector<bool> mask=std::vector<bool>(),double rstart=0.01,double growthrate=2.0,size_t max_iters=~size_t(0)) const
+	{
+		if(mask.size()==0)
+		{
+			mask.resize(feature_size,true);
+		}
+
+		//technically the actual epsilon growthrate should be pow(growthrate,1.0/feature_size) for volume awareness.
+		//these are doubles for precision.
+		//they should also be relative to the size of the space (calculate extrema when building)
+
+		//initial starting value should cover 1% of the data (if 2k/num_features==1%)...use rstart for that.
+		//so basically compute this correctly.
+
+		double epislon=rstart;
+		double epislonrate=growthrate;
+
+		std::vector<FloatType> upper(feature_size),lower(feature_size);
+		std::vector<size_t> found;
+		for(size_t current_iter=0;found.size() < k && current_iter < max_iters)
+		{
+			for(size_t di=0;di<feature_size;di++)
+			{
+				upper[di]=feature[di]+epislon;
+				lower[di]=feature[di]-epislon;
+			}
+			found=range_query(lower,upper);
+			if(found.size() >= k)
+			{
+				return reduce_knearest(k,feature,found,metric,mask);
+			}
+			epislon*=growthrate;
+		}
+		return std::vector<size_t>();
 	}
 };
 
