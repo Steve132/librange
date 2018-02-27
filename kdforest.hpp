@@ -14,6 +14,7 @@ private:
 	std::vector<std::vector<size_t>> forest_dimension_indices;
 	std::vector<size_t> forest_sizes;
 	size_t max_size;
+	std::vector<std::vector<size_t>> cindices2indices;
 private:
 	static size_t compute_num_trees(size_t n,size_t feature_size,size_t tnum_trees)
 	{
@@ -59,9 +60,9 @@ public:
 		for(size_t fi=0;fi<num_trees;fi++)
 		{
 			forest_indices[fi]=sindices;
-			kdsort(data+treefront,data+treefront+forest_sizes[fi],
-				forest_indices.begin(),forest_indices.end(),
-				forest_dimension_indices.begin(),
+			kdsort(data+treefront,forest_sizes[fi],
+				forest_indices[fi].begin(),forest_indices[fi].end(),
+				forest_dimension_indices[fi].begin(),
 				max_size,0,feature_size);
 			treefront+=forest_sizes[fi];
 		}
@@ -71,6 +72,33 @@ public:
 	kdforest(FeatureFunc f,size_t tnum_features,size_t tfeature_size,size_t tnum_trees=0):
 		kdforest(build_features_array(f,tnum_features,tfeature_size),tfeature_size,tnum_trees)
 	{}
+	
+	void cache_optimize_data_array()
+	{
+		if(cindices2indices.size())
+		{
+			return; //data is already cache aware
+		}
+		cindices2indices.resize(num_trees);
+		size_t treefront=0;
+		for(size_t fi=0;fi<num_trees;fi++)
+		{
+			std::vector<size_t> localcindices(forest_indices[fi]);
+			kdrotate(data+treefront,forest_sizes[fi],
+				localcindices.begin(),localcindices.end(),
+				max_size,0,feature_size);
+			treefront+=forest_sizes[fi];
+			
+			std::vector<size_t>& ci2ir=cindices2indices[fi];
+			const std::vector<size_t>& fir=forest_indices[fi];
+			ci2ir.resize(num_features);
+			for(size_t ci=0;ci<localcindices.size();ci++)
+			{
+				ci2ir[localcindices[ci]]=fir[ci];
+			}
+			fir=localcindices;
+		}
+	}
 
 	std::vector<size_t> range_query(const FloatType* lower,const FloatType* upper,std::vector<bool> mask=std::vector<bool>())
 	{
@@ -97,6 +125,19 @@ public:
 			std::back_inserter(outrange),countdown,
 			max_size,0,feature_size);
 			treefront+=forest_sizes[fi];
+			
+			if(cindices2indices.size())
+			{
+				const std::vector<size_t>& ci2ir=cindices2indices[fi];
+				std::transform(candidate.cbegin(),candidate.cend(),candidate.begin(),
+					[ci2ir](size_t d) 
+					{ 
+						return ci2ir[d]; 
+					}
+				);
+			}
+			
+			
 			if(!inited)
 			{
 				candidate.insert(outrange.cbegin(),outrange.cend());
@@ -114,6 +155,7 @@ public:
 				candidate=newc;
 			}
 		}
+		
 		return std::vector<size_t>(candidate.cbegin(),candidate.cend());
 	}
 };
