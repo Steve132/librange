@@ -100,7 +100,7 @@ public:
 		}
 	}
 
-	std::vector<size_t> range_query(const FloatType* lower,const FloatType* upper,std::vector<bool> mask=std::vector<bool>())
+	std::vector<size_t> range_query(const FloatType* lower,const FloatType* upper,std::vector<bool> mask=std::vector<bool>()) const
 	{
 		if(mask.size() == 0)
 		{
