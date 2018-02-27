@@ -70,7 +70,7 @@ public:
 
 	std::vector<std::size_t> knearest_query(size_t k,const FloatType* feature,
 		std::function<FloatType (const FloatType*,const FloatType*,size_t,const std::vector<bool>&)> metric,
-		std::vector<bool> mask=std::vector<bool>(),double rstart=0.01,double growthrate=2.0,size_t max_iters=~size_t(0)) const
+		std::vector<bool> mask=std::vector<bool>(),double rstart=0.01,double growthrate=10.0,size_t max_iters=~size_t(0)) const
 	{
 		if(mask.size()==0)
 		{
@@ -85,7 +85,7 @@ public:
 		//so basically compute this correctly.
 
 		double epislon=rstart;
-		double epislonrate=growthrate;
+		double epislonrate=std::pow(growthrate,1.0/static_cast<double>(feature_size));
 
 		std::vector<FloatType> upper(feature_size),lower(feature_size);
 		std::vector<size_t> found;
