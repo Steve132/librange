@@ -83,19 +83,19 @@ public:
 		bool inited=false;
 		std::unordered_set<size_t> candidate(16);
 
-		
+		size_t treefront=0;
 		for(size_t fi=0;fi<num_trees;fi++)
 		{
 			outrange.clear();
 			size_t countdown=~size_t(0);
-			kdrangesearch(data+fi*forest_sizes[0],forest_sizes[fi],
+			kdrangesearch(data+treefront,forest_sizes[fi],
 			forest_indices[fi].cbegin(),forest_indices[fi].cend(),
 			forest_dimension_indices[fi].cbegin(),forest_dimension_indices[fi].cend(),
 			lower,upper,
-			std::vector<bool>(mask.cbegin()+forest_sizes[0]*fi,mask.cbegin()+forest_sizes[0]*fi+forest_sizes.back()),
+			std::vector<bool>(mask.cbegin()+treefront,mask.cbegin()+treefront+forest_sizes[fi]),
 			std::back_inserter(outrange),countdown,
 			max_size,0,feature_size);
-
+			treefront+=forest_sizes[fi];
 			if(!inited)
 			{
 				candidate.insert(outrange.cbegin(),outrange.cend());
