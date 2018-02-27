@@ -43,7 +43,9 @@ protected:
 	{}
 
 public:
-	virtual std::vector<size_t> range_query(const FloatType* lower,const FloatType* upper,std::vector<bool> mask=std::vector<bool>()) const
+	virtual std::vector<size_t> range_query(
+			const FloatType* lower,const FloatType* upper,
+		std::vector<bool> mask=std::vector<bool>()) const;
 	/*std::nth_element to sort by nearest neighbors.
 	*/
 	std::vector<size_t> reduce_knearest(
