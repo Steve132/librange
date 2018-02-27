@@ -15,6 +15,7 @@ private:
 	std::vector<size_t> forest_sizes;
 	size_t max_size;
 	std::vector<std::vector<size_t>> cindices2indices;
+	std::vector<FloatType> cacheoptimdata;
 private:
 	static size_t compute_num_trees(size_t n,size_t feature_size,size_t tnum_trees)
 	{
@@ -60,7 +61,7 @@ public:
 		for(size_t fi=0;fi<num_trees;fi++)
 		{
 			forest_indices[fi]=sindices;
-			kdsort(data+treefront,forest_sizes[fi],
+			kdsort(data.data()+treefront,forest_sizes[fi],
 				forest_indices[fi].begin(),forest_indices[fi].end(),
 				forest_dimension_indices[fi].begin(),
 				max_size,0,feature_size);
@@ -81,10 +82,11 @@ public:
 		}
 		cindices2indices.resize(num_trees);
 		size_t treefront=0;
+		cacheoptimdata=data;
 		for(size_t fi=0;fi<num_trees;fi++)
 		{
 			std::vector<size_t> localcindices(forest_indices[fi]);
-			kdrotate(data+treefront,forest_sizes[fi],
+			kdrotate(cacheoptimdata.data()+treefront,forest_sizes[fi],
 				localcindices.begin(),localcindices.end(),
 				max_size,0,feature_size);
 			treefront+=forest_sizes[fi];
@@ -113,11 +115,12 @@ public:
 		std::unordered_set<size_t> candidate(16);
 
 		size_t treefront=0;
+		const FloatType* dptr=cacheoptimdata.size() ? cacheoptimdata.data() : data.data();
 		for(size_t fi=0;fi<num_trees;fi++)
 		{
 			outrange.clear();
 			size_t countdown=~size_t(0);
-			kdrangesearch(data+treefront,forest_sizes[fi],
+			kdrangesearch(dptr+treefront,forest_sizes[fi],
 			forest_indices[fi].cbegin(),forest_indices[fi].cend(),
 			forest_dimension_indices[fi].cbegin(),forest_dimension_indices[fi].cend(),
 			lower,upper,
