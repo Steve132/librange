@@ -55,14 +55,15 @@ public:
 		}
 
 		max_size=1;
-		
+		size_t treefront=0;
 		for(size_t fi=0;fi<num_trees;fi++)
 		{
 			forest_indices[fi]=sindices;
-			kdsort(data+fi*mainsize,forest_sizes[fi],
+			kdsort(data+treefront,data+treefront+forest_sizes[fi],
 				forest_indices.begin(),forest_indices.end(),
 				forest_dimension_indices.begin(),
 				max_size,0,feature_size);
+			treefront+=forest_sizes[fi];
 		}
 	}
 	
