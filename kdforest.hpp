@@ -48,7 +48,11 @@ public:
 		size_t mainsize=feature_size / num_trees;
 		size_t lastsize=feature_size % num_trees;
 		std::fill(forest_sizes.begin(),forest_sizes.end(),mainsize);
-		forest_sizes.back()=lastsize;
+		
+		if(lastsize!=0)
+		{
+			forest_sizes.back()=lastsize;
+		}
 
 		max_size=1;
 		
