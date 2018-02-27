@@ -3,6 +3,7 @@
 
 #include<algorithm>
 #include<vector>
+#include<memory>
 
 template<class FloatType,class IndexIterator,class DimIndexIterator>
 void kdsort(const FloatType* data,size_t feature_size,
@@ -48,10 +49,10 @@ void printpoint(const float* l,size_t fs);
 template<class FloatType>
 inline bool checkinside(const FloatType* point,const FloatType* lower,const FloatType* upper,size_t feature_size,const std::vector<bool>& mask)
 {
-	std::cout << "now checking" << std::endl;
+	/*std::cout << "now checking" << std::endl;
 	std::cout << "point:"; printpoint(point,feature_size);
 	std::cout << "lower:"; printpoint(lower,feature_size);
-	std::cout << "upper:"; printpoint(upper,feature_size);
+	std::cout << "upper:"; printpoint(upper,feature_size);*/
 
 	for(size_t di=0;di<feature_size;di++)
 	{
@@ -60,12 +61,12 @@ inline bool checkinside(const FloatType* point,const FloatType* lower,const Floa
 			FloatType fd=point[di];
 			if((fd >= upper[di]) || (fd < lower[di]))
 			{
-				std::cout << "False" << std::endl;
+				//std::cout << "False" << std::endl;
 				return false;
 			}
 		}
 	}
-	std::cout << "True" << std::endl;
+	//std::cout << "True" << std::endl;
 	return true;
 }
 
@@ -119,5 +120,71 @@ void kdrangesearch(const FloatType* data,size_t feature_size,
 		kdrangesearch(data,feature_size,ibe+n2+1,ied,dbe+n2+1,ded,lower,upper,mask,output,remaining_outputs,max_size,level+1,stride);
 	}
 }
+//this is a little esoteric, but basically it remaps the indices with a floating point reordering of the data array such that 
+//the feature data is laid out linearly in memory (could be better for cache performance...maybe..
+//for converting the data order to match what would be an in-order traversal (cache performance again)
 
+//this should help a lot with cache.
+//untested.
+
+template<class FloatType,class IndexIterator,class DimIndexIterator>
+void kdrotate(FloatType* data,size_t feature_size,
+	IndexIterator ibe,IndexIterator ied,size_t max_size=1,size_t level=0,size_t stride=0,size_t* initial_index=nullptr,FloatType* olddata=nullptr)
+{
+	size_t n=ied-ibe;
+	std::unique_ptr<size_t> initial_index_sp;
+	std::unique_ptr<FloatType[]> olddata_sp;
+
+	if(n==0)
+	{
+		return;
+	}
+	if(stride==0)
+	{
+		stride=feature_size;
+	}
+	if(level==0)
+	{
+		if(initial_index==nullptr)
+		{
+			initial_index=new size_t;
+			initial_index_sp.reset(initial_index);
+			*initial_index=0;
+		}
+		if(olddata==nullptr)
+		{
+			olddata=new FloatType[n*feature_size];
+			olddata_sp.reset(olddata);
+			if(stride==feature_size)
+			{
+				std::copy(data,data+n*feature_size,olddata);
+			}
+			else
+			{
+				for(size_t i=0;i<n;i++)
+				{
+					std::copy(data+i*stride,data,data+i*stride+feature_size,olddata+i*feature_size);
+				}
+			}
+		}
+	}
+	auto writebackfunc=[=](size_t dexin)
+	{
+		size_t dexout=(*initial_index)++;
+		std::copy(olddata+dexin*feature_size,olddata+(dexin)*feature_size+feature_size,data+dexout*stride);
+		return dexout;
+	};
+	if(n<=max_size)
+	{
+		for(size_t i=0;i<n;i++)
+		{
+			*(ibe+i)=writebackfunc(*(ibe+i));
+		}
+		return;
+	}
+	*(ibe+n/2)=writebackfunc(*(ibe+n/2));
+
+	kdsort(data,feature_size,ibe,ibe+n/2,max_size,level+1,stride,initial_index,olddata);
+	kdsort(data,feature_size,ibe+n/2+1,max_size,level+1,stride,initial_index,olddata);
+}
 #endif

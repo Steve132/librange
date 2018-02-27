@@ -57,7 +57,7 @@ void simple2dtest(size_t n=12)
 
 }
 
-void simplerandtest(size_t n=100000,size_t d=4)
+void simplerandtest(size_t n,size_t d)
 {
 	std::vector<float> testdata(n*d);
 
@@ -77,7 +77,13 @@ void simplerandtest(size_t n=100000,size_t d=4)
 
 	size_t selected=16;
 	float epsilon=0.0001f;
+	size_t ignorei=3;
+
+
+	std::vector<bool> msk(d,true);
+	msk[ignorei]=false;
 	float* ptr=&testdata[d*selected];
+	
 	std::cout << "searching for"; printpoint(ptr,d); std::cout << std::endl;
 	std::vector<float> ll(ptr,ptr+d),ur(ptr,ptr+d);
 	
@@ -85,6 +91,10 @@ void simplerandtest(size_t n=100000,size_t d=4)
 	{
 		ll[fi]-=epsilon;
 		ur[fi]+=epsilon;
+		if(fi==ignorei)
+		{
+			ll[fi]=ur[fi]=0.0;
+		}
 	}
 	
 	std::vector<size_t> cand;
@@ -95,13 +105,13 @@ void simplerandtest(size_t n=100000,size_t d=4)
 	indices.cbegin(),indices.cend(),
 	dimsout.cbegin(),dimsout.cend(),
 	&ll[0],&ur[0],
-	std::vector<bool>(d,true),
+	msk,
 	outb,rem);
 
 
 	for(size_t i=0;i<cand.size();i++)
 	{
-		std::cout << "#" << cand[i] << std::endl;
+		std::cout << "Found #" << cand[i] << std::endl;
 	}
 
 }
@@ -109,6 +119,6 @@ void simplerandtest(size_t n=100000,size_t d=4)
 
 int main(int argc,char** argv)
 {
-	simplerandtest(100,2);
+	simplerandtest(100000,5);
 	return 0;
 }
