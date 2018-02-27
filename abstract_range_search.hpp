@@ -48,7 +48,7 @@ public:
 		std::vector<bool> mask=std::vector<bool>()) const;
 	/*std::nth_element to sort by nearest neighbors.
 	*/
-	std::vector<size_t> reduce_knearest(
+	std::vector<size_t> reduce_nearest(
 		size_t k,
 		const FloatType* feature,
 		std::vector<size_t> candidates,
@@ -70,7 +70,7 @@ public:
 		return candidates;
 	}
 
-	std::vector<std::size_t> knearest_query(size_t k,const FloatType* feature,
+	std::vector<std::size_t> nearest_query(size_t k,const FloatType* feature,
 		std::function<FloatType (const FloatType*,const FloatType*,size_t,const std::vector<bool>&)> metric,
 		std::vector<bool> mask=std::vector<bool>(),double rstart=0.01,double growthrate=10.0,size_t max_iters=~size_t(0)) const
 	{
@@ -101,7 +101,7 @@ public:
 			found=range_query(lower,upper);
 			if(found.size() >= k)
 			{
-				return reduce_knearest(k,feature,found,metric,mask);
+				return reduce_nearest(k,feature,found,metric,mask);
 			}
 			epislon*=growthrate;
 		}
