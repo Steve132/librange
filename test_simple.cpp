@@ -125,19 +125,22 @@ void simplerandforesttest(size_t n,size_t d)
 
 	std::random_device rd;  //Will be used to obtain a seed for the random number engine
 	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-	std::uniform_real_distribution<> dis(0.0,1.0);
+	std::uniform_real_distribution<> dis(0.0,255.0);
 	
 	std::generate(testdata.begin(),testdata.end(),[&](){ return dis(gen); });	
 		
-	kdforest<float> myforest(testdata,d,3);
+	kdforest<float> myforest(testdata,d);
 
 	size_t selected=16;
 	float epsilon=0.0001f;
-	size_t ignorei=3;
-
+	std::vector<size_t> ignorelist{23,24,25,18,19};
+	std::cout << "Construction complete" << std::endl;
 
 	std::vector<bool> msk(d,true);
-	msk[ignorei]=false;
+	for(auto ignorei : ignorelist)
+	{
+		msk[ignorei]=false;
+	}
 	float* ptr=&testdata[d*selected];
 	
 	std::cout << "searching for"; printpoint(ptr,d); std::cout << std::endl;
@@ -147,10 +150,10 @@ void simplerandforesttest(size_t n,size_t d)
 	{
 		ll[fi]-=epsilon;
 		ur[fi]+=epsilon;
-		if(fi==ignorei)
+		/*if(fi==ignorei)
 		{
 			ll[fi]=ur[fi]=0.0;
-		}
+		}*/
 	}
 	
 	
@@ -162,17 +165,17 @@ void simplerandforesttest(size_t n,size_t d)
 	}
 
 	std::cout << "Nearest" << std::endl;
-	std::vector<size_t> rcand=myforest.nearest_query(1,ptr,Lnorm<float,0>);
+	std::vector<size_t> rcand=myforest.nearest_query(5,ptr,Lnorm<float,0>);
 
-	for(size_t i=0;i<cand.size();i++)
+	for(size_t i=0;i<rcand.size();i++)
 	{
-		std::cout << "Found #" << cand[i] << std::endl;
+		std::cout << "Found #" << rcand[i] << std::endl;
 	}
 }
 
 
 int main(int argc,char** argv)
 {
-	simplerandforesttest(100000,10);
+	simplerandforesttest(250000,25);
 	return 0;
 }
