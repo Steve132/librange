@@ -144,7 +144,8 @@ void simplerandforesttest(size_t n,size_t d)
 	float* ptr=&testdata[d*selected];
 	
 	std::cout << "searching for"; printpoint(ptr,d); std::cout << std::endl;
-
+	int i;
+	std::cin >> i; 
 	std::vector<float> ll(ptr,ptr+d),ur(ptr,ptr+d);
 	for(size_t fi=0;fi<d;fi++)
 	{
@@ -176,6 +177,6 @@ void simplerandforesttest(size_t n,size_t d)
 
 int main(int argc,char** argv)
 {
-	simplerandforesttest(250000,64);
+	simplerandforesttest(10000000,64);
 	return 0;
 }
