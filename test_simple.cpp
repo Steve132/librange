@@ -160,6 +160,14 @@ void simplerandforesttest(size_t n,size_t d)
 	{
 		std::cout << "Found #" << cand[i] << std::endl;
 	}
+
+	std::cout << "Nearest" << std::endl;
+	std::vector<size_t> rcand=myforest.nearest_query(1,ptr,Lnorm<float,0>);
+
+	for(size_t i=0;i<cand.size();i++)
+	{
+		std::cout << "Found #" << cand[i] << std::endl;
+	}
 }
 
 

@@ -2,6 +2,7 @@
 #define ABSTRACT_RANGE_SEARCH_HPP
 
 #include<vector>
+#include<algorithm>
 
 template<class FloatType>
 class abstract_range_search
@@ -55,18 +56,24 @@ public:
 		std::function<FloatType (const FloatType*,const FloatType*,size_t,const std::vector<bool>&)> metric,
 		const std::vector<bool>& mask=std::vector<bool>()) const
 	{
-		std::vector<FloatType> distances(candidates.size());
+		std::vector<std::pair<size_t,FloatType> > distances2(candidates.size());
 		for(size_t i=0;i<candidates.size();i++)
 		{
-			distances[i]=metric(feature,&data[i*feature_size],feature_size,mask);
+			size_t c=candidates[i];
+			distances2[i]=std::make_pair(c,metric(feature,&data[c*feature_size],feature_size,mask));
 		}
 		if(k < candidates.size())
 		{
-			std::nth_element(candidates.begin(),candidates.begin()+k,candidates.end(),
-				[&distances](const size_t dex1,const size_t dex2) {return distances[dex1] < distances[dex2];}
+			std::nth_element(distances2.begin(),distances2.begin()+k,distances2.end(),
+			[](const std::pair<size_t,FloatType>& d1,
+			   const std::pair<size_t,FloatType>& d2) {return d1.second < d2.second;}
 			);
+			distances2.resize(k);
 			candidates.resize(k);
 		}
+		std::transform(distances2.cbegin(),distances2.cend(),candidates.begin(),
+			       [](const std::pair<size_t,FloatType>& d) { return d.first; }
+		     );
 		return candidates;
 	}
 
@@ -86,8 +93,8 @@ public:
 		//initial starting value should cover 1% of the data (if 2k/num_features==1%)...use rstart for that.
 		//so basically compute this correctly.
 
-		double epislon=rstart;
-		double epislonrate=std::pow(growthrate,1.0/static_cast<double>(feature_size));
+		double epsilon=rstart;
+		double epsilonrate=std::pow(growthrate,1.0/static_cast<double>(feature_size));
 
 		std::vector<FloatType> upper(feature_size),lower(feature_size);
 		std::vector<size_t> found;
@@ -95,15 +102,15 @@ public:
 		{
 			for(size_t di=0;di<feature_size;di++)
 			{
-				upper[di]=feature[di]+epislon;
-				lower[di]=feature[di]-epislon;
+				upper[di]=feature[di]+epsilon;
+				lower[di]=feature[di]-epsilon;
 			}
-			found=range_query(lower,upper);
+			found=range_query(lower.data(),upper.data(),mask);
 			if(found.size() >= k)
 			{
 				return reduce_nearest(k,feature,found,metric,mask);
 			}
-			epislon*=growthrate;
+			epsilon*=epsilonrate;
 		}
 		return std::vector<size_t>();
 	}
