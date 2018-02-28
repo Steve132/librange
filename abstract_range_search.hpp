@@ -54,7 +54,7 @@ public:
 		const FloatType* feature,
 		std::vector<size_t> candidates,
 		std::function<FloatType (const FloatType*,const FloatType*,size_t,const std::vector<bool>&)> metric,
-		const std::vector<bool>& mask=std::vector<bool>()) const
+		const std::vector<bool>& mask=std::vector<bool>(),bool sorted=false) const
 	{
 		std::vector<std::pair<size_t,FloatType> > distances2(candidates.size());
 		for(size_t i=0;i<candidates.size();i++)
@@ -62,14 +62,19 @@ public:
 			size_t c=candidates[i];
 			distances2[i]=std::make_pair(c,metric(feature,&data[c*feature_size],feature_size,mask));
 		}
+		auto d2sorter=[](const std::pair<size_t,FloatType>& d1,
+			   const std::pair<size_t,FloatType>& d2) {return d1.second < d2.second;};
 		if(k < candidates.size())
 		{
 			std::nth_element(distances2.begin(),distances2.begin()+k,distances2.end(),
-			[](const std::pair<size_t,FloatType>& d1,
-			   const std::pair<size_t,FloatType>& d2) {return d1.second < d2.second;}
+				d2sorter
 			);
 			distances2.resize(k);
 			candidates.resize(k);
+		}
+		if(sorted)
+		{
+			std::sort(distances2.begin(),distances2.end(),d2sorter);
 		}
 		std::transform(distances2.cbegin(),distances2.cend(),candidates.begin(),
 			       [](const std::pair<size_t,FloatType>& d) { return d.first; }
@@ -79,7 +84,7 @@ public:
 
 	std::vector<std::size_t> nearest_query(size_t k,const FloatType* feature,
 		std::function<FloatType (const FloatType*,const FloatType*,size_t,const std::vector<bool>&)> metric,
-		std::vector<bool> mask=std::vector<bool>(),double rstart=0.01,double growthrate=10.0,size_t max_iters=~size_t(0)) const
+		std::vector<bool> mask=std::vector<bool>(),bool sorted=true,double rstart=0.01,double growthrate=10.0,size_t max_iters=~size_t(0)) const
 	{
 		if(mask.size()==0)
 		{
@@ -108,7 +113,7 @@ public:
 			found=range_query(lower.data(),upper.data(),mask);
 			if(found.size() >= k)
 			{
-				return reduce_nearest(k,feature,found,metric,mask);
+				return reduce_nearest(k,feature,found,metric,mask,sorted);
 			}
 			epsilon*=epsilonrate;
 		}

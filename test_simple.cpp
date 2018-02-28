@@ -133,7 +133,7 @@ void simplerandforesttest(size_t n,size_t d)
 
 	size_t selected=16;
 	float epsilon=0.0001f;
-	std::vector<size_t> ignorelist{23,24,25,18,19};
+	std::vector<size_t> ignorelist;//{23,24,25,18,19};
 	std::cout << "Construction complete" << std::endl;
 
 	std::vector<bool> msk(d,true);
@@ -165,7 +165,7 @@ void simplerandforesttest(size_t n,size_t d)
 	}
 
 	std::cout << "Nearest" << std::endl;
-	std::vector<size_t> rcand=myforest.nearest_query(5,ptr,Lnorm<float,0>);
+	std::vector<size_t> rcand=myforest.nearest_query(15,ptr,Lnorm<float,2>,msk);
 
 	for(size_t i=0;i<rcand.size();i++)
 	{
@@ -176,6 +176,6 @@ void simplerandforesttest(size_t n,size_t d)
 
 int main(int argc,char** argv)
 {
-	simplerandforesttest(250000,25);
+	simplerandforesttest(250000,64);
 	return 0;
 }
