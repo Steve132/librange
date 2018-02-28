@@ -2,11 +2,16 @@
 #define KDFOREST_HPP
 
 #include "abstract_range_search.hpp"
-
+#include <unordered_set>
 
 template<class FloatType>
 class kdforest: public abstract_range_search<FloatType>
 {
+protected:
+	using abstract_range_search<FloatType>::data;
+public:
+	using abstract_range_search<FloatType>::num_features;
+	using abstract_range_search<FloatType>::feature_size;
 public:
 	const size_t num_trees;
 private:
@@ -17,7 +22,7 @@ private:
 	std::vector<std::vector<size_t>> cindices2indices;
 	std::vector<FloatType> cacheoptimdata;
 private:
-	static size_t compute_num_trees(size_t n,size_t feature_size,size_t tnum_trees)
+	size_t compute_num_trees(size_t n,size_t feature_size,size_t tnum_trees)
 	{
 		size_t recommended_max_size;
 		for(recommended_max_size=0;(size_t(1) << recommended_max_size) <= n;recommended_max_size++);
@@ -34,11 +39,11 @@ private:
 		{
 			throw std::runtime_error("Requested kdtree size is more than the recommended size");
 		}
-		return feature_size/requested_max_size+((feature_size % requested_max_size) ? 1 : 0);
+		return tnum_trees;
 	}
 public:
 	kdforest(const std::vector<FloatType>& tdata,size_t tfeature_size,size_t tnum_trees=0):
-		abstract_range_search(tdata,tfeature_size),
+		abstract_range_search<FloatType>(tdata,tfeature_size),
 		num_trees(compute_num_trees(num_features,tfeature_size,tnum_trees)),
 		forest_indices(num_trees),
 		forest_dimension_indices(num_trees),
@@ -47,8 +52,8 @@ public:
 		std::vector<size_t> sindices(num_features);
 		std::iota(sindices.begin(),sindices.end(),0);
 
-		size_t mainsize=feature_size / num_trees;
-		size_t lastsize=feature_size % num_trees;
+		size_t mainsize=feature_size / num_trees + ((feature_size % num_trees) ? 1 : 0);
+		size_t lastsize=feature_size % mainsize;
 		std::fill(forest_sizes.begin(),forest_sizes.end(),mainsize);
 		
 		if(lastsize!=0)
@@ -61,6 +66,7 @@ public:
 		for(size_t fi=0;fi<num_trees;fi++)
 		{
 			forest_indices[fi]=sindices;
+			forest_dimension_indices[fi].resize(num_features);
 			kdsort(data.data()+treefront,forest_sizes[fi],
 				forest_indices[fi].begin(),forest_indices[fi].end(),
 				forest_dimension_indices[fi].begin(),
@@ -120,19 +126,21 @@ public:
 		{
 			outrange.clear();
 			size_t countdown=~size_t(0);
+			auto cinserter=std::back_inserter(outrange);
+		
 			kdrangesearch(dptr+treefront,forest_sizes[fi],
 			forest_indices[fi].cbegin(),forest_indices[fi].cend(),
 			forest_dimension_indices[fi].cbegin(),forest_dimension_indices[fi].cend(),
 			lower,upper,
 			std::vector<bool>(mask.cbegin()+treefront,mask.cbegin()+treefront+forest_sizes[fi]),
-			std::back_inserter(outrange),countdown,
+			cinserter,countdown,
 			max_size,0,feature_size);
 			treefront+=forest_sizes[fi];
 			
 			if(cindices2indices.size())
 			{
 				const std::vector<size_t>& ci2ir=cindices2indices[fi];
-				std::transform(candidate.cbegin(),candidate.cend(),candidate.begin(),
+				std::transform(outrange.cbegin(),outrange.cend(),outrange.begin(),
 					[ci2ir](size_t d) 
 					{ 
 						return ci2ir[d]; 
@@ -157,6 +165,7 @@ public:
 				}
 				candidate=newc;
 			}
+			
 		}
 		
 		return std::vector<size_t>(candidate.cbegin(),candidate.cend());

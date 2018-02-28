@@ -4,7 +4,7 @@
 #include<vector>
 
 template<class FloatType>
-class abstract_static_range_search
+class abstract_range_search
 {
 protected:
 	std::vector<FloatType> data;
@@ -31,7 +31,7 @@ protected:
 		size_t tfeature_size):
 		data(tdata),
 		num_features(tdata.size()/tfeature_size),
-		featuresize(tfeature_size)
+		feature_size(tfeature_size)
 	{
 		//std::vector<size_t> sindices(num_features);
 		//std::iota(sindices.begin(),sindices.end(),0);
@@ -39,13 +39,13 @@ protected:
 	
 	template<class FeatureFunc>
 	abstract_range_search(FeatureFunc f,size_t tnum_features,size_t tfeature_size):
-		absract_range_search(build_features_array(f,tnum_features,tfeature_size),tfeature_size)
+		abstract_range_search(build_features_array(f,tnum_features,tfeature_size),tfeature_size)
 	{}
 
 public:
 	virtual std::vector<size_t> range_query(
 			const FloatType* lower,const FloatType* upper,
-		std::vector<bool> mask=std::vector<bool>()) const;
+		std::vector<bool> mask=std::vector<bool>()) const=0;
 	/*std::nth_element to sort by nearest neighbors.
 	*/
 	std::vector<size_t> reduce_nearest(
@@ -91,7 +91,7 @@ public:
 
 		std::vector<FloatType> upper(feature_size),lower(feature_size);
 		std::vector<size_t> found;
-		for(size_t current_iter=0;found.size() < k && current_iter < max_iters)
+		for(size_t current_iter=0;current_iter < max_iters;current_iter++)
 		{
 			for(size_t di=0;di<feature_size;di++)
 			{

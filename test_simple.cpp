@@ -1,5 +1,7 @@
 #include<iostream>
 #include "kdarray.hpp"
+#include "kdforest.hpp"
+#include "metrics.hpp"
 #include<array>
 #include<random>
 
@@ -117,8 +119,52 @@ void simplerandtest(size_t n,size_t d)
 }
 
 
+void simplerandforesttest(size_t n,size_t d)
+{
+	std::vector<float> testdata(n*d);
+
+	std::random_device rd;  //Will be used to obtain a seed for the random number engine
+	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+	std::uniform_real_distribution<> dis(0.0,1.0);
+	
+	std::generate(testdata.begin(),testdata.end(),[&](){ return dis(gen); });	
+		
+	kdforest<float> myforest(testdata,d,3);
+
+	size_t selected=16;
+	float epsilon=0.0001f;
+	size_t ignorei=3;
+
+
+	std::vector<bool> msk(d,true);
+	msk[ignorei]=false;
+	float* ptr=&testdata[d*selected];
+	
+	std::cout << "searching for"; printpoint(ptr,d); std::cout << std::endl;
+
+	std::vector<float> ll(ptr,ptr+d),ur(ptr,ptr+d);
+	for(size_t fi=0;fi<d;fi++)
+	{
+		ll[fi]-=epsilon;
+		ur[fi]+=epsilon;
+		if(fi==ignorei)
+		{
+			ll[fi]=ur[fi]=0.0;
+		}
+	}
+	
+	
+	std::vector<size_t> cand=myforest.range_query(ll.data(),ur.data(),msk);
+
+	for(size_t i=0;i<cand.size();i++)
+	{
+		std::cout << "Found #" << cand[i] << std::endl;
+	}
+}
+
+
 int main(int argc,char** argv)
 {
-	simplerandtest(100000,5);
+	simplerandforesttest(100000,10);
 	return 0;
 }

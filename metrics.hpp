@@ -1,19 +1,19 @@
 #ifndef METRICS_HPP
 #define METRICS_HPP
 
-static size_t MAX_NORM=~size_t(0);
+static const size_t MAX_NORM=~size_t(0);
 template<class FloatType,size_t P>
 struct Lnorm_impl
 {
 	static FloatType call(const FloatType* f1,const FloatType* f2,size_t n,const std::vector<bool>& mask)
 	{
-		FloatType sm=0.0
+		FloatType sm=0.0;
 		for(size_t di=0;di<n;di++)
 		{
 			if(mask.size() == n && mask[di])
 			{			
 				FloatType diff=f2[di]-f1[di];
-				sm+=std::pow(std::fabs(diff),P)*masklookup;
+				sm+=std::pow(std::fabs(diff),P);
 			}
 		}
 		return std::pow(sm,1.0/static_cast<double>(P));
@@ -42,7 +42,7 @@ struct Lnorm_impl<FloatType,1>
 {
 	static FloatType call(const FloatType* f1,const FloatType* f2,size_t n,const std::vector<bool>& mask)
 	{
-		FloatType sm=0.0
+		FloatType sm=0.0;
 		for(size_t di=0;di<n;di++)
 		{
 			if(mask.size() == n && mask[di])
@@ -59,7 +59,7 @@ struct Lnorm_impl<FloatType,2>
 {
 	static FloatType call(const FloatType* f1,const FloatType* f2,size_t n,const std::vector<bool>& mask)
 	{
-		FloatType sm=0.0
+		FloatType sm=0.0;
 		for(size_t di=0;di<n;di++)
 		{
 			if(mask.size() == n && mask[di])
